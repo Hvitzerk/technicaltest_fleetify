@@ -12,7 +12,7 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	// DSN disesuaikan dengan isi docker-compose.yml 
+	
 	dsn := "host=127.0.0.1 user=admin password=secretpassword dbname=fleetify_invoice port=5433 sslmode=disable"
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -22,14 +22,14 @@ func ConnectDB() {
 	fmt.Println("Koneksi Database Berhasil!")
 	DB = database
 
-	// Menjalankan Auto-Migrate dari GORM
+	//  Auto-Migrate GORM
 	err = DB.AutoMigrate(&models.Item{}, &models.Invoice{}, &models.InvoiceDetail{})
 	if err != nil {
 		log.Fatal("Gagal auto-migrate database!\n", err)
 	}
 	fmt.Println("Auto-Migrate Selesai!")
 
-	// Jalankan Seeder
+	// run it ySeeder
 	SeedItems(DB)
 }
 
@@ -37,7 +37,7 @@ func SeedItems(db *gorm.DB) {
 	var count int64
 	db.Model(&models.Item{}).Count(&count)
 
-	// Jika tabel items masih kosong, masukkan data dummy
+	// kosong, dummy data in
 	if count == 0 {
 		items := []models.Item{
 			{Code: "BRG-001", Name: "Oli Mesin Super", Price: 150000},

@@ -29,7 +29,7 @@ interface WizardState {
   resetForm: () => void;
 }
 
-// Membuat Store dengan middleware "persist" agar tahan banting dari F5/Refresh
+// Membuat Store dengan middleware 
 export const useWizardStore = create<WizardState>()(
   persist(
     (set) => ({

@@ -1,8 +1,8 @@
 FROM golang:alpine AS builder
 
-# Set the Current Working Directory inside the container
+
 WORKDIR /app
-# Copy go mod and sum files
+
 COPY go.mod go.sum ./
 RUN go mod download
 

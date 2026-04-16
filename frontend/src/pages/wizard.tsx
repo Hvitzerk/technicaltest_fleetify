@@ -3,14 +3,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { useWizardStore, WizardItem } from "../store/useWizardStore";
-import { useItemSearch } from "../lib/useItemSearch"; // 🔌 Kabel pencarian kita colok di sini
+import { useItemSearch } from "../lib/useItemSearch"; 
 import api from "../lib/axios";
 
 export default function Wizard() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
+  const [userRole, setUserRole] = useState("Petugas");
 
-  // Panggil isi dari brankas Zustand
+  
   const {
     step,
     sender_name,
@@ -19,12 +20,12 @@ export default function Wizard() {
     receiver_address,
     items, // State untuk daftar barang
     setClientData,
-    setItems, // Fungsi untuk mengubah daftar barang
+    setItems, // daftar barang
     nextStep,
     prevStep,
   } = useWizardStore();
 
-  // Panggil "Senjata Rahasia" Debounce & React Query kita
+  //  Debounce & React Query untuk pencarian barang berdasarkan kode
   const { searchTerm, setSearchTerm, data: searchResult, isLoading, isError } = useItemSearch();
 
   useEffect(() => {
@@ -32,6 +33,18 @@ export default function Wizard() {
     const token = Cookies.get("token");
     if (!token) {
       router.push("/");
+    } else {
+      
+      try {
+        const decoded = jwtDecode<{ role?: string }>(token);
+        if (decoded.role) {
+          // Jadikan huruf pertama kapital 
+          const formattedRole = decoded.role.charAt(0).toUpperCase() + decoded.role.slice(1);
+          setUserRole(formattedRole);
+        }
+      } catch (error) {
+        console.error("Gagal membaca token", error);
+      }
     }
   }, [router]);
 
@@ -42,7 +55,7 @@ export default function Wizard() {
     nextStep();
   };
 
-  // Fungsi untuk memasukkan barang hasil cari ke dalam tabel
+  // handleitem to tabel
   const handleAddItem = (itemFromApi: { id: number; code: string; name: string; price: number }) => {
     // Cek apakah barang sudah ada di tabel
     const existingItem = items.find((i) => i.item_id === itemFromApi.id);
@@ -71,7 +84,7 @@ export default function Wizard() {
     setSearchTerm("");
   };
 
-  // Fungsi mengubah jumlah (Qty) di tabel
+  //  Mengubah jumlah (Qty) di tabel
   const handleUpdateQty = (itemId: number, newQty: number) => {
     if (newQty < 1) return; // Minimal qty 1
     const updatedItems = items.map((i) =>
@@ -80,7 +93,7 @@ export default function Wizard() {
     setItems(updatedItems);
   };
 
-  // Fungsi hapus barang dari tabel
+  
   const handleRemoveItem = (itemId: number) => {
     setItems(items.filter((i) => i.item_id !== itemId));
   };
@@ -99,7 +112,7 @@ export default function Wizard() {
           </div>
         </div>
 
-        {/* ================= STEP 1: PENGIRIM & PENERIMA ================= */}
+        {/*STEP 1: Data Pengirim dan penerima*/}
         {step === 1 && (
           <form onSubmit={handleStep1Submit} className="space-y-6 animate-fade-in">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -144,7 +157,7 @@ export default function Wizard() {
           </form>
         )}
 
-        {/* ================= STEP 2: PILIH BARANG ================= */}
+        {/*STEP 2: Choose Items*/}
         {step === 2 && (
           <div className="space-y-6 animate-fade-in">
             <div className="bg-white p-6 border rounded-xl shadow-sm">
@@ -261,7 +274,7 @@ export default function Wizard() {
           </div>
         )}
 
-        {/* ================= STEP 3: REVIEW, SUBMIT, & CETAK ================= */}
+        {/*  STEP 3: Review, Submit, & Cetak/print */}
         {step === 3 && (
           <div className="space-y-6 animate-fade-in" id="area-cetak">
             <div className="bg-white p-8 border rounded-xl shadow-sm relative">
@@ -325,7 +338,7 @@ export default function Wizard() {
               {/* Tanda Tangan */}
               <div className="grid grid-cols-2 gap-8 mt-12 text-center text-black">
                 <div>
-                  <p className="mb-20">Petugas / Kerani</p>
+                  <p className="mb-20 font-medium">Petugas / {userRole}</p>
                   <p className="font-bold underline">(........................................)</p>
                 </div>
                 <div>
@@ -343,7 +356,7 @@ export default function Wizard() {
               
               <div className="space-x-4">
                 <button type="button" onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">
-                  🖨️ Cetak Resi
+                   Cetak Resi
                 </button>
                 
                 <button 
@@ -353,11 +366,11 @@ export default function Wizard() {
                       const token = Cookies.get("token");
                       if (!token) throw new Error("Token tidak ditemukan");
 
-                      // 1. DECODE TOKEN UNTUK CEK ROLE
+                      // 1. Decode token for user role
                       const decoded= jwtDecode<{ role?: string }>(token);
-                      const userRole = decoded.role?.toLowerCase() || ""; // Pastikan property role sesuai dengan Golang kamu
+                      const userRole = decoded.role?.toLowerCase() || ""; 
 
-                      // 2. MANIPULASI PAYLOAD (SATPAM KEAMANAN)
+                      // 2. Manipulasi payload
                       const finalItems = items.map((item) => {
                         // Jika Kerani, hapus harga dan subtotal dari payload
                         if (userRole === "kerani") {
@@ -383,12 +396,12 @@ export default function Wizard() {
                         items: finalItems
                       };
 
-                      // 3. TEMBAK API BACKEND
-                      // PENTING: Ganti '/transactions' dengan endpoint API Golang kamu yang sebenarnya
+                      // 3. API Backend
+                      
                       await api.post("/invoices", payload);
                       
                       alert("Transaksi Berhasil Disimpan!");
-                      // Hapus data dari brankas Zustand dan kembali ke step 1
+                      
                       useWizardStore.getState().resetForm(); 
 
                     } catch (error) {
@@ -398,7 +411,7 @@ export default function Wizard() {
                   }} 
                   className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
                 >
-                  🚀 Submit Transaksi
+                  Submit Transaksi
                 </button>
               </div>
             </div>

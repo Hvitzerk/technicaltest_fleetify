@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Secret Key untuk menandatangani JWT 
+// Secret Key untuk  JWT 
 var JwtSecret = []byte("rahasia_negara_fleetify")
 
 // Struct untuk menerima data dari body request (JSON)

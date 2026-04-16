@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
-import api from "../lib/axios"; // Menggunakan jalan mundur agar aman dari error TypeScript
+import api from "../lib/axios"; 
 import axios from "axios";
 
 export default function Login() {
@@ -17,7 +17,7 @@ export default function Login() {
     setError("");
 
     try {
-      // Menembak API Backend Golang yang sudah kita buat
+      // API Backend untuk autentikasi login 
       const response = await api.post("/login", {
         username: username,
         password: password,
@@ -54,7 +54,7 @@ export default function Login() {
           <p className="text-gray-500 mt-2">Masuk untuk membuat resi invoice</p>
         </div>
 
-        {/* Notifikasi Error (Sesuai Syarat Robust Error Handling di Dokumen) */}
+        {/* Notifikasi Error */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
             {error}

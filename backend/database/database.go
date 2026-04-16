@@ -4,6 +4,7 @@ import (
 	"backend/models"
 	"fmt"
 	"log"
+	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,8 +13,18 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
+
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "127.0.0.1"
+	}
+
+	dbPort := os.Getenv("DB_PORT")
+	if dbPort == "" {
+		dbPort = "5433"
+	}
 	
-	dsn := "host=127.0.0.1 user=admin password=secretpassword dbname=fleetify_invoice port=5433 sslmode=disable"
+	dsn := fmt.Sprintf("host=%s user=admin password=secretpassword dbname=fleetify_invoice port=%s sslmode=disable", dbHost, dbPort)
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Gagal koneksi ke database!\n", err)

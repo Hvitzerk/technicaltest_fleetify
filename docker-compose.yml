@@ -1,17 +1,44 @@
 version: '3.8'
 
 services:
+  # 1. Container Database (PostgreSQL)
   db:
     image: postgres:15-alpine
     container_name: fleetify_db
+    restart: always
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: secretpassword
       POSTGRES_DB: fleetify_invoice
     ports:
-      - "5433:5432"
+      - "5433:5432" # Akses dari luar pakai 5433, tapi di dalam Docker tetap 5432
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  # 2. Container Backend (Golang)
+  backend:
+    build: ./backend # Pastikan nama folder backend kamu adalah "backend"
+    container_name: fleetify_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      # Di sini letak sihirnya, menimpa default dari database.go milikmu
+      - DB_HOST=db
+      - DB_PORT=5432 # Wajib 5432 karena backend ngobrol langsung ke internal container db
+    depends_on:
+      - db
+
+  # 3. Container Frontend (Next.js)
+  frontend:
+    build: ./frontend # Pastikan nama folder frontend kamu adalah "frontend"
+    container_name: fleetify_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+# Deklarasi Volume agar data resi tidak hilang saat laptop dimatikan
 volumes:
   pgdata:

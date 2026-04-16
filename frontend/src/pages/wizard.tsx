@@ -1,8 +1,10 @@
+import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { useWizardStore, WizardItem } from "../store/useWizardStore";
 import { useItemSearch } from "../lib/useItemSearch"; // 🔌 Kabel pencarian kita colok di sini
+import api from "../lib/axios";
 
 export default function Wizard() {
   const [isMounted, setIsMounted] = useState(false);
@@ -41,7 +43,7 @@ export default function Wizard() {
   };
 
   // Fungsi untuk memasukkan barang hasil cari ke dalam tabel
-  const handleAddItem = (itemFromApi: any) => {
+  const handleAddItem = (itemFromApi: { id: number; code: string; name: string; price: number }) => {
     // Cek apakah barang sudah ada di tabel
     const existingItem = items.find((i) => i.item_id === itemFromApi.id);
     
@@ -259,16 +261,149 @@ export default function Wizard() {
           </div>
         )}
 
-        {/* ================= STEP 3: PLACEHOLDER ================= */}
+        {/* ================= STEP 3: REVIEW, SUBMIT, & CETAK ================= */}
         {step === 3 && (
-          <div className="text-center py-16">
-            <h2 className="text-3xl font-bold text-gray-700">Tahap 3: Review & Submit</h2>
-            <button type="button" onClick={prevStep} className="mt-8 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-              ⬅ Kembali ke Step 2
-            </button>
+          <div className="space-y-6 animate-fade-in" id="area-cetak">
+            <div className="bg-white p-8 border rounded-xl shadow-sm relative">
+              
+              {/* Kop Surat (Hanya Muncul Saat Dicetak atau di Step 3) */}
+              <div className="text-center border-b-2 border-gray-800 pb-4 mb-6">
+                <h1 className="text-4xl font-extrabold text-blue-800 tracking-wider uppercase">FLEETIFY LOGISTICS</h1>
+                <p className="text-gray-500">Jl. Teknologi Canggih No. 99, Jakarta Raya | Telp: (021) 555-1234</p>
+                <h2 className="text-2xl font-bold text-gray-800 mt-4">RESI PENGIRIMAN BARANG</h2>
+              </div>
+
+              {/* Info Pengirim & Penerima */}
+              <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="p-4 border rounded-lg bg-gray-50">
+                  <h3 className="font-bold text-gray-700 border-b pb-2 mb-2">PENGIRIM</h3>
+                  <p className="text-black font-semibold text-lg">{sender_name}</p>
+                  <p className="text-gray-600 text-sm whitespace-pre-wrap">{sender_address}</p>
+                </div>
+                <div className="p-4 border rounded-lg bg-gray-50">
+                  <h3 className="font-bold text-gray-700 border-b pb-2 mb-2">PENERIMA</h3>
+                  <p className="text-black font-semibold text-lg">{receiver_name}</p>
+                  <p className="text-gray-600 text-sm whitespace-pre-wrap">{receiver_address}</p>
+                </div>
+              </div>
+
+              {/* Tabel Review Barang */}
+              <div className="mb-8">
+                <h3 className="font-bold text-gray-700 mb-3">RINCIAN BARANG</h3>
+                <table className="w-full text-left border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-200 text-gray-800">
+                      <th className="p-2 border border-gray-300">Kode</th>
+                      <th className="p-2 border border-gray-300">Nama Barang</th>
+                      <th className="p-2 border border-gray-300 text-center">Qty</th>
+                      {/* Harga dan Subtotal tetap tampil di layar Review agar user tahu, 
+                          tapi tidak akan dikirim ke Backend jika rolenya Kerani */}
+                      <th className="p-2 border border-gray-300 text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item) => (
+                      <tr key={item.item_id} className="text-black">
+                        <td className="p-2 border border-gray-300">{item.code}</td>
+                        <td className="p-2 border border-gray-300">{item.name}</td>
+                        <td className="p-2 border border-gray-300 text-center">{item.quantity}</td>
+                        <td className="p-2 border border-gray-300 text-right font-semibold">Rp {item.subtotal.toLocaleString('id-ID')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-gray-100">
+                      <td colSpan={3} className="p-2 border border-gray-300 text-right font-bold text-gray-800">TOTAL KESELURUHAN</td>
+                      <td className="p-2 border border-gray-300 text-right font-bold text-blue-700 text-lg">
+                        Rp {items.reduce((total, item) => total + item.subtotal, 0).toLocaleString('id-ID')}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* Tanda Tangan */}
+              <div className="grid grid-cols-2 gap-8 mt-12 text-center text-black">
+                <div>
+                  <p className="mb-20">Petugas / Kerani</p>
+                  <p className="font-bold underline">(........................................)</p>
+                </div>
+                <div>
+                  <p className="mb-20">Pengirim</p>
+                  <p className="font-bold underline">{sender_name}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tombol Aksi (Akan Hilang Saat Dicetak) */}
+            <div className="flex justify-between pt-6 mt-6 sembunyikan-saat-cetak">
+              <button type="button" onClick={prevStep} className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">
+                ⬅ Kembali Edit
+              </button>
+              
+              <div className="space-x-4">
+                <button type="button" onClick={() => window.print()} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">
+                  🖨️ Cetak Resi
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    try {
+                      const token = Cookies.get("token");
+                      if (!token) throw new Error("Token tidak ditemukan");
+
+                      // 1. DECODE TOKEN UNTUK CEK ROLE
+                      const decoded= jwtDecode<{ role?: string }>(token);
+                      const userRole = decoded.role?.toLowerCase() || ""; // Pastikan property role sesuai dengan Golang kamu
+
+                      // 2. MANIPULASI PAYLOAD (SATPAM KEAMANAN)
+                      const finalItems = items.map((item) => {
+                        // Jika Kerani, hapus harga dan subtotal dari payload
+                        if (userRole === "kerani") {
+                          return {
+                            item_id: item.item_id,
+                            quantity: item.quantity
+                          };
+                        }
+                        // Jika Admin, kirim utuh
+                        return {
+                          item_id: item.item_id,
+                          quantity: item.quantity,
+                          price: item.price,
+                          subtotal: item.subtotal
+                        };
+                      });
+
+                      const payload = {
+                        sender_name,
+                        sender_address,
+                        receiver_name,
+                        receiver_address,
+                        items: finalItems
+                      };
+
+                      // 3. TEMBAK API BACKEND
+                      // PENTING: Ganti '/transactions' dengan endpoint API Golang kamu yang sebenarnya
+                      await api.post("/invoices", payload);
+                      
+                      alert("Transaksi Berhasil Disimpan!");
+                      // Hapus data dari brankas Zustand dan kembali ke step 1
+                      useWizardStore.getState().resetForm(); 
+
+                    } catch (error) {
+                      console.error(error);
+                      alert("Gagal menyimpan transaksi. Cek console log.");
+                    }
+                  }} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all"
+                >
+                  🚀 Submit Transaksi
+                </button>
+              </div>
+            </div>
           </div>
         )}
-
       </div>
     </div>
   );

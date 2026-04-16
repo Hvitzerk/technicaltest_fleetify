@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import api from "../lib/axios"; // Menggunakan jalan mundur agar aman dari error TypeScript
+import axios from "axios";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -31,11 +32,15 @@ export default function Login() {
         // Pindah ke halaman form Wizard
         router.push("/wizard");
       }
-    } catch (err: any) {
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
       // Menangkap pesan error dari backend
       setError(
         err.response?.data?.error || "Login gagal. Periksa kembali username dan password Anda."
       );
+      } else {
+        setError("Terjadi kesalahan sistem yang tidak terduga.");
+      }
     } finally {
       setLoading(false);
     }

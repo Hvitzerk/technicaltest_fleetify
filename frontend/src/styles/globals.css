@@ -2,3 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #area-cetak, #area-cetak * {
+    visibility: visible;
+  }
+  #area-cetak {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+  }
+  .sembunyikan-saat-cetak {
+    display: none !important;
+  }
+}

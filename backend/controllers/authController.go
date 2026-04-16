@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Secret Key untuk menandatangani JWT (Bisa ditaruh di .env nantinya)
+// Secret Key untuk menandatangani JWT 
 var JwtSecret = []byte("rahasia_negara_fleetify")
 
 // Struct untuk menerima data dari body request (JSON)
@@ -46,7 +46,7 @@ func Login(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"role":    role,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(), // Token expired dalam 72 Jam
+		"exp":     time.Now().Add(time.Hour * 72).Unix(), 
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -59,7 +59,7 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Kirim response sukses ke Frontend
+	// Frontend response
 	return c.JSON(fiber.Map{
 		"message": "Login berhasil",
 		"token":   t,

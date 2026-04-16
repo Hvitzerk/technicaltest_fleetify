@@ -7,12 +7,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Secret Key harus sama persis dengan yang ada di authController
+// Secret Key harus sama dengan authController
 var JwtSecret = []byte("rahasia_negara_fleetify")
 
 func Protected() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// 1. Ambil header Authorization dari request Frontend/Postman
+		// 1. Ambil header Authorization dari request
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -20,7 +20,7 @@ func Protected() fiber.Handler {
 			})
 		}
 
-		// 2. Pastikan formatnya bener: "Bearer <token_panjang_kamu>"
+		// 2. Periksa format token (Harus "Bearer <token>")
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

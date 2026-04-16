@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Struct ini sudah disesuaikan dengan kebutuhan models.go milikmu
+// Struct untuk menerima data dari body request (JSON) saat membuat invoice
 type InvoiceRequest struct {
 	SenderName      string `json:"sender_name"`
 	SenderAddress   string `json:"sender_address"`
@@ -38,7 +38,7 @@ func CreateInvoice(c *fiber.Ctx) error {
 	if rawUserID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Akses ditolak, User tidak teridentifikasi"})
 	}
-	userID := uint(rawUserID.(float64)) // Ambil ID Kasir dari JWT
+	userID := uint(rawUserID.(float64)) 
 
 	// transaksi Database
 
@@ -119,7 +119,7 @@ func CreateInvoice(c *fiber.Ctx) error {
 }
 
 func sendWebhook(invoiceNumber string, total float64) {
-	// Target URL Webhook (Biasanya diberikan oleh sistem eksternal/ERP)
+	// Target URL Webhook
 	webhookURL := "https://webhook.site/9ad7de53-1092-4eb0-b20b-1b45f4772904" // URL dummy untuk contoh
 
 	// Data yang mau dikirim ke webhook
@@ -139,7 +139,7 @@ func sendWebhook(invoiceNumber string, total float64) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Eksekusi pengiriman (Max timeout 5 detik biar nggak gantung)
+	// Eksekusi pengiriman (Max timeout 5 detik untuk menghindari blocking)
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {

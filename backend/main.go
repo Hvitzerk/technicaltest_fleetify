@@ -38,6 +38,9 @@ func main() {
 				"role":    role,
 			})
 		})
+
+	app.Post("/api/invoices", middleware.Protected(), controllers.CreateInvoice)
+	
 	// 4. server on
 	app.Listen(":8000")
 }

@@ -6,6 +6,7 @@ import (
 	"backend/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -14,6 +15,12 @@ func main() {
 
 	// 2. Inisialisasi Fiber App
 	app := fiber.New()
+
+	// 2.1 Middleware CORS untuk mengizinkan akses dari frontend
+	app.Use(cors.New(cors.Config{
+        AllowOrigins: "*",
+        AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+    }))
 
 	// 3. test route
 	app.Get("/", func(c *fiber.Ctx) error {
